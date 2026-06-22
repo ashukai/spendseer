@@ -159,53 +159,11 @@ export default function HomeScreen() {
         )}
       </div>
 
-      {transactions.length > 0 && (
-        <div className="tx-list">
-          <h3 className="tx-list-title">Recent</h3>
-          {transactions.slice(0, 20).map((tx) => (
-            <TxRow
-              key={tx.id}
-              tx={tx}
-              homeCurrency={settings.home_currency}
-              categories={allCategories}
-            />
-          ))}
-        </div>
-      )}
-
       <BottomNav active="home" />
     </div>
   )
 }
 
-function TxRow({ tx, homeCurrency, categories }) {
-  const cat = categories.find((c) => c.id === tx.category_id)
-  const date = new Date(tx.spent_at).toLocaleDateString('en', {
-    month: 'short', day: 'numeric',
-  })
-  return (
-    <div className="tx-row">
-      {cat ? (
-        <CategoryIcon icon={cat.icon} color={cat.color} size={36} />
-      ) : (
-        <div className="tx-circle" style={{ background: '#F4F4F9' }}>
-          <TablerIcons.IconBox size={16} stroke={1.8} color="#9898B8" />
-        </div>
-      )}
-      <div className="tx-info">
-        <div className="tx-cat">{cat?.name ?? 'Uncategorized'}</div>
-        {tx.note && <div className="tx-note">{tx.note}</div>}
-      </div>
-      <div className="tx-amounts">
-        {tx.currency !== homeCurrency && (
-          <span className="tx-foreign">{tx.currency} {formatAmount(tx.amount)}</span>
-        )}
-        <span className="tx-home">{homeCurrency} {formatAmount(tx.home_amount)}</span>
-      </div>
-      <span className="tx-date">{date}</span>
-    </div>
-  )
-}
 
 function ComparisonBars({ categories, prevSpendByCatId, prevTotal }) {
   const rows = categories
