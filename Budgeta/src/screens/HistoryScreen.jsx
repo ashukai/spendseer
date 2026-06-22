@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { getTransactions, getCategories, deleteTransaction } from '../lib/db.js'
 import { useSettings } from '../hooks/useSettings.js'
 import { BottomNav, formatAmount } from './HomeScreen.jsx'
@@ -7,11 +8,12 @@ import * as TablerIcons from '@tabler/icons-react'
 
 export default function HistoryScreen() {
   const { settings } = useSettings()
+  const [searchParams] = useSearchParams()
   const [transactions, setTransactions] = useState([])
   const [categories, setCategories]     = useState([])
   const [loading, setLoading]           = useState(true)
   const [search, setSearch]             = useState('')
-  const [filterCatId, setFilterCatId]   = useState(null) // null = All
+  const [filterCatId, setFilterCatId]   = useState(() => searchParams.get('catId') || null)
   const [expandedId, setExpandedId]     = useState(null) // tapped tx row
   const [deletingId, setDeletingId]     = useState(null)
 

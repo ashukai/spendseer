@@ -24,6 +24,15 @@ export default function DonutRing({ segments = [], loading = false }) {
     )
   }
 
+  // Single segment = full circle; SVG arc can't go point-to-same-point
+  if (segments.length === 1) {
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <circle cx={cx} cy={cy} r={R} fill="none" stroke={segments[0].color} strokeWidth={stroke} />
+      </svg>
+    )
+  }
+
   const arcs = buildArcs(segments, total, R, cx, cy)
 
   return (

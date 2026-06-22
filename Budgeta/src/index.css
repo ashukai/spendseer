@@ -154,13 +154,31 @@ input, select { font-family: inherit; }
 .category-list { padding: 8px 16px; display: flex; flex-direction: column; gap: 6px; }
 
 .category-row {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 12px; border-radius: var(--radius);
+  display: flex; align-items: center; gap: 0;
+  border-radius: var(--radius);
   background: var(--bg2); border: 1px solid var(--border);
-  width: 100%; text-align: left; cursor: pointer;
+  width: 100%; overflow: hidden;
   transition: border-color 0.12s;
 }
 .category-row:hover { border-color: #C0C0E0; }
+
+/* Icon side — taps to filtered history */
+.cat-icon-btn {
+  flex-shrink: 0; padding: 10px 10px 10px 12px;
+  display: flex; align-items: center;
+  background: none; border: none; cursor: pointer;
+  border-right: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.cat-icon-btn:hover { background: var(--bg3); }
+
+/* Body side — taps to add expense */
+.cat-row-body {
+  flex: 1; display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; background: none; border: none;
+  cursor: pointer; text-align: left; min-width: 0;
+}
+.cat-row-body:hover .cat-add-hint { opacity: 1; }
 
 .cat-circle {
   width: 44px; height: 44px; border-radius: 50%;
@@ -174,7 +192,7 @@ input, select { font-family: inherit; }
   font-size: 12px; color: var(--accent); font-weight: 600;
   opacity: 0; transition: opacity 0.1s; white-space: nowrap; margin-left: 4px;
 }
-.category-row:hover .cat-add-hint { opacity: 1; }
+.cat-row-body:hover .cat-add-hint { opacity: 1; }
 
 .empty-hint { color: var(--text-muted); font-size: 14px; text-align: center; padding: 32px 0; }
 

@@ -132,18 +132,27 @@ export default function HomeScreen() {
 
       <div className="category-list">
         {categoryRows.map((cat) => (
-          <button
-            key={cat.id}
-            className="category-row"
-            onClick={() => navigate(`/add?categoryId=${cat.id}`)}
-          >
-            <CategoryIcon icon={cat.icon} color={cat.color} size={44} />
-            <span className="cat-name">{cat.name}</span>
-            <span className={`cat-amount${cat.spent === 0 ? ' cat-amount-zero' : ''}`}>
-              {cat.spent > 0 ? `${settings.home_currency} ${formatAmount(cat.spent)}` : '—'}
-            </span>
-            <span className="cat-add-hint">+ add</span>
-          </button>
+          <div key={cat.id} className="category-row">
+            {/* Icon tap → History filtered to this category */}
+            <button
+              className="cat-icon-btn"
+              onClick={() => navigate(`/history?catId=${cat.id}`)}
+              title="View history"
+            >
+              <CategoryIcon icon={cat.icon} color={cat.color} size={44} />
+            </button>
+            {/* Rest of row → Add expense */}
+            <button
+              className="cat-row-body"
+              onClick={() => navigate(`/add?categoryId=${cat.id}`)}
+            >
+              <span className="cat-name">{cat.name}</span>
+              <span className={`cat-amount${cat.spent === 0 ? ' cat-amount-zero' : ''}`}>
+                {cat.spent > 0 ? `${settings.home_currency} ${formatAmount(cat.spent)}` : '—'}
+              </span>
+              <span className="cat-add-hint">+ add</span>
+            </button>
+          </div>
         ))}
         {!loading && allCategories.length === 0 && (
           <p className="empty-hint">No categories yet. Add one in Categories.</p>
