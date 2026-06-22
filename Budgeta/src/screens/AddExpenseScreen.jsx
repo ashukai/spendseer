@@ -145,19 +145,6 @@ export default function AddExpenseScreen() {
         </div>
       </div>
 
-      {/* Quick-amount chips */}
-      <div className="quick-amounts">
-        {QUICK_AMOUNTS.map((amt) => (
-          <button
-            key={amt}
-            className={`quick-chip${rawAmount === String(amt) ? ' quick-chip-active' : ''}`}
-            onClick={() => tapQuickAmount(amt)}
-          >
-            {amt}
-          </button>
-        ))}
-      </div>
-
       {/* Keypad */}
       <div className="keypad">
         {KEYPAD.map(([k, sub]) => (
@@ -174,6 +161,19 @@ export default function AddExpenseScreen() {
                 {sub && <span className="key-sub">{sub}</span>}
               </>
             )}
+          </button>
+        ))}
+      </div>
+
+      {/* Quick-amount chips — moved below keypad so they sit in thumb zone */}
+      <div className="quick-amounts">
+        {QUICK_AMOUNTS.map((amt) => (
+          <button
+            key={amt}
+            className={`quick-chip${rawAmount === String(amt) ? ' quick-chip-active' : ''}${[10, 50, 100].includes(amt) ? ' quick-chip-wide' : ''}`}
+            onClick={() => tapQuickAmount(amt)}
+          >
+            {amt}
           </button>
         ))}
       </div>

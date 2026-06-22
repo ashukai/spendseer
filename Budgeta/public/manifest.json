@@ -1,0 +1,14 @@
+{
+  "name": "NomadWallet",
+  "short_name": "NomadWallet",
+  "description": "Multi-currency expense tracker for travelers and expats",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F0F0FB",
+  "theme_color": "#0f0f1a",
+  "icons": [
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

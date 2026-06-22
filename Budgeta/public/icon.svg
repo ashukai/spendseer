@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Light background -->
+  <rect width="512" height="512" fill="#F0F0FB"/>
+
+  <!-- Shadow/depth under ring -->
+  <circle cx="260" cy="262" r="158" fill="none" stroke="#00000008" stroke-width="58"/>
+
+  <!-- Background ring -->
+  <circle cx="256" cy="256" r="155" fill="none" stroke="#E0E0F2" stroke-width="50"/>
+
+  <!-- Teal segment ~52% (starting top, going clockwise) -->
+  <circle cx="256" cy="256" r="155" fill="none" stroke="#00B5A5" stroke-width="50"
+    stroke-dasharray="506 468" stroke-dashoffset="117" stroke-linecap="butt"/>
+  <!-- Purple segment ~26% -->
+  <circle cx="256" cy="256" r="155" fill="none" stroke="#7C6FFF" stroke-width="50"
+    stroke-dasharray="253 721" stroke-dashoffset="-389" stroke-linecap="butt"/>
+  <!-- Coral segment ~22% -->
+  <circle cx="256" cy="256" r="155" fill="none" stroke="#FF6B6B" stroke-width="50"
+    stroke-dasharray="214 760" stroke-dashoffset="-642" stroke-linecap="butt"/>
+
+  <!-- White inner circle -->
+  <circle cx="256" cy="256" r="80" fill="white"/>
+
+  <!-- Subtle location pin shape -->
+  <circle cx="256" cy="244" r="28" fill="#7C6FFF"/>
+  <path d="M256 272 Q240 294 256 316 Q272 294 256 272Z" fill="#7C6FFF"/>
+  <!-- White dot inside pin -->
+  <circle cx="256" cy="244" r="11" fill="white"/>
+</svg>

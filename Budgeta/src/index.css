@@ -309,6 +309,7 @@ input, select { font-family: inherit; }
 }
 .quick-chip:active { background: var(--bg3); }
 .quick-chip-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.quick-chip-wide { padding: 0 20px; } /* 10, 50, 100 — wider target for most-tapped chips */
 
 /* ===== Keypad ===== */
 .keypad {
