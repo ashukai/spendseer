@@ -22,7 +22,7 @@ export default function LoginScreen() {
   return (
     <div className="auth-screen">
       <div className="auth-card">
-        <h1 className="auth-title">Budgeta</h1>
+        <h1 className="auth-title">SpendSeer</h1>
         <p className="auth-sub">Track spending in any currency</p>
 
         <form onSubmit={handleSubmit} className="auth-form">

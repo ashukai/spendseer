@@ -9,7 +9,7 @@
  * → rate stored on tx = 1 / rates[foreignCode]  (home per 1 foreign unit)
  */
 
-const CACHE_KEY = 'budgeta_fx'
+const CACHE_KEY = 'spendseer_fx'
 const TTL_MS = 60 * 60 * 1000 // 1 hour
 
 function readCache(homeCurrency) {

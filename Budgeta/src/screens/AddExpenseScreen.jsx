@@ -28,7 +28,7 @@ export default function AddExpenseScreen() {
 
   // Persist last-used currency across sessions
   const [currency, setCurrencyState] = useState(
-    () => localStorage.getItem('budgeta_last_currency') ?? settings.pinned_currencies[0] ?? 'AED'
+    () => localStorage.getItem('spendseer_last_currency') ?? settings.pinned_currencies[0] ?? 'AED'
   )
   const [rawAmount, setRawAmount]     = useState('')
   const [homePreview, setHomePreview] = useState(null)
@@ -38,7 +38,7 @@ export default function AddExpenseScreen() {
 
   function setCurrency(code) {
     setCurrencyState(code)
-    localStorage.setItem('budgeta_last_currency', code)
+    localStorage.setItem('spendseer_last_currency', code)
   }
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export default function AddExpenseScreen() {
 
   // Only fall back to settings default if nothing stored
   useEffect(() => {
-    if (!localStorage.getItem('budgeta_last_currency')) {
+    if (!localStorage.getItem('spendseer_last_currency')) {
       setCurrencyState(settings.pinned_currencies[0] ?? 'AED')
     }
   }, [settings.pinned_currencies])

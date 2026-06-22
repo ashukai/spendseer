@@ -1,7 +1,7 @@
 {
-  "name": "NomadWallet",
-  "short_name": "NomadWallet",
-  "description": "Multi-currency expense tracker for travelers and expats",
+  "name": "SpendSeer",
+  "short_name": "SpendSeer",
+  "description": "Track spending across currencies — see where your money goes",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

@@ -27,7 +27,7 @@ export default function SignupScreen() {
   return (
     <div className="auth-screen">
       <div className="auth-card">
-        <h1 className="auth-title">Budgeta</h1>
+        <h1 className="auth-title">SpendSeer</h1>
         <p className="auth-sub">Create your account</p>
 
         <form onSubmit={handleSubmit} className="auth-form">
