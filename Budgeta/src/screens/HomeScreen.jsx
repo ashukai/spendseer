@@ -215,15 +215,8 @@ function ComparisonBars({ categories, prevSpendByCatId, prevTotal }) {
 
   if (rows.length === 0) return null
 
-  // No prev data yet — show teaser
-  if (prevTotal === 0) {
-    return (
-      <div className="comparison-wrap comparison-empty">
-        <span className="cleg-this">vs last period</span>
-        <span className="cleg-prev">Keep logging — comparison appears after your first full period</span>
-      </div>
-    )
-  }
+  // No prev data yet — hide entirely, nothing to compare
+  if (prevTotal === 0) return null
 
   const max = Math.max(...rows.flatMap((c) => [c.spent, c.prev]), 1)
 
