@@ -78,18 +78,18 @@ input, select { font-family: inherit; }
 /* ===== Screen shell ===== */
 .screen {
   display: flex; flex-direction: column;
-  min-height: 100vh; padding-bottom: 72px;
+  min-height: 100vh; padding-bottom: calc(72px + env(safe-area-inset-bottom));
   background: var(--bg);
 }
 .screen-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 20px 20px 12px; background: var(--bg2);
+  padding: calc(env(safe-area-inset-top) + 20px) 20px 12px; background: var(--bg2);
   border-bottom: 1px solid var(--border);
 }
 .screen-title { font-size: 22px; font-weight: 800; color: var(--text); }
 
 /* ===== Home screen ===== */
-.home-screen { padding-bottom: 80px; }
+.home-screen { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
 
 .home-top {
   background: var(--bg2);
@@ -99,7 +99,7 @@ input, select { font-family: inherit; }
 
 .period-nav {
   display: flex; align-items: center; justify-content: center; gap: 16px;
-  padding: 20px 0 0;
+  padding: calc(env(safe-area-inset-top) + 20px) 0 0;
 }
 .period-arrow {
   font-size: 20px; color: var(--text-muted); padding: 4px 12px;
@@ -221,12 +221,12 @@ input, select { font-family: inherit; }
   position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 480px;
   display: flex; background: var(--bg2); border-top: 1px solid var(--border);
-  height: 68px; z-index: 20;
+  height: calc(68px + env(safe-area-inset-bottom)); z-index: 20;
 }
 .nav-btn {
   flex: 1; display: flex; flex-direction: column; align-items: center;
   justify-content: center; gap: 3px; font-size: 11px; color: var(--text-muted);
-  font-weight: 500; padding-bottom: 4px;
+  font-weight: 500; padding-bottom: calc(env(safe-area-inset-bottom) + 4px);
 }
 .nav-btn i { font-size: 22px; }
 .nav-active { color: var(--accent) !important; }
@@ -238,7 +238,7 @@ input, select { font-family: inherit; }
 
 .add-header {
   display: flex; align-items: center; gap: 12px;
-  padding: 16px 16px 14px;
+  padding: calc(env(safe-area-inset-top) + 16px) 16px 14px;
 }
 .back-btn {
   width: 36px; height: 36px; border-radius: 50%;
