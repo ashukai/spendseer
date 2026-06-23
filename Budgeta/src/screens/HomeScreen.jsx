@@ -128,6 +128,7 @@ export default function HomeScreen() {
         )}
       </div>
 
+      <div className="home-scroll">
       {!loading && <p className="tap-hint">Tap a category to log an expense</p>}
 
       <div className="category-list">
@@ -158,6 +159,7 @@ export default function HomeScreen() {
           <p className="empty-hint">No categories yet. Add one in Categories.</p>
         )}
       </div>
+      </div>{/* end home-scroll */}
 
       <BottomNav active="home" />
     </div>

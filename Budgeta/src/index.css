@@ -89,9 +89,21 @@ input, select { font-family: inherit; }
 .screen-title { font-size: 22px; font-weight: 800; color: var(--text); }
 
 /* ===== Home screen ===== */
-.home-screen { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+.home-screen {
+  height: 100dvh;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.home-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+}
 
 .home-top {
+  flex-shrink: 0;
   background: var(--bg2);
   border-bottom: 1px solid var(--border);
   padding-bottom: 0;
