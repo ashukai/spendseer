@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth.js'
+import { syncOfflineQueue } from './lib/db.js'
 
 import LoginScreen          from './screens/LoginScreen.jsx'
 import SignupScreen         from './screens/SignupScreen.jsx'
@@ -25,6 +27,17 @@ function RequireGuest({ children }) {
 }
 
 export default function App() {
+  // Sync any expenses saved offline whenever the app starts or reconnects
+  useEffect(() => {
+    syncOfflineQueue().catch(() => {})
+
+    const handleOnline = () => {
+      syncOfflineQueue().catch(() => {})
+    }
+    window.addEventListener('online', handleOnline)
+    return () => window.removeEventListener('online', handleOnline)
+  }, [])
+
   return (
     <BrowserRouter>
       <Routes>

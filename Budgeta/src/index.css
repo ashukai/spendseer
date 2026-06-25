@@ -350,7 +350,7 @@ input, select { font-family: inherit; }
 .note-input-inline {
   flex: 1; padding: 11px 14px;
   background: var(--bg); border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm); color: var(--text); font-size: 14px; outline: none;
+  border-radius: var(--radius-sm); color: var(--text); font-size: 16px; outline: none;
 }
 .note-input-inline:focus { border-color: var(--accent); }
 .save-btn-inline {

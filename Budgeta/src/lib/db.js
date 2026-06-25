@@ -97,6 +97,13 @@ export async function getTransactions(from, to) {
 }
 
 export async function addTransaction(tx) {
+  // Offline — save to IndexedDB and return a pending placeholder
+  if (!navigator.onLine) {
+    const { queueTransaction } = await import('./offlineQueue.js')
+    const local_id = await queueTransaction(tx)
+    return { ...tx, id: local_id, _pending: true }
+  }
+
   const { data: { session } } = await supabase.auth.getSession()
   const { data, error } = await supabase
     .from('transactions')
@@ -105,6 +112,41 @@ export async function addTransaction(tx) {
     .single()
   if (error) throw error
   return data
+}
+
+/**
+ * Flush the offline queue to Supabase.
+ * Call on app mount and whenever navigator.onLine flips true.
+ * Returns the number of transactions synced.
+ */
+export async function syncOfflineQueue() {
+  if (!navigator.onLine) return 0
+
+  const { getPendingTransactions, removePendingTransaction } =
+    await import('./offlineQueue.js')
+
+  const pending = await getPendingTransactions()
+  if (!pending.length) return 0
+
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return 0   // will retry after login
+
+  let synced = 0
+  for (const item of pending) {
+    const { local_id, queued_at, _pending, ...tx } = item
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .insert({ ...tx, user_id: session.user.id })
+      if (!error) {
+        await removePendingTransaction(local_id)
+        synced++
+      }
+    } catch {
+      // partial network failure — leave in queue, retry next time
+    }
+  }
+  return synced
 }
 
 export async function deleteTransaction(id) {
