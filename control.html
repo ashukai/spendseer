@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>SpendSeer Control Room</title>
+<style>
+/* The owner's view of SpendSeer. Desktop first: this is read on a Mac, beside
+   the phone, not on it. Nothing here grants anything — every number comes from
+   an admin_cr_* function that checks is_admin() on the server. */
+:root{
+  color-scheme:light;
+  --bg:#f4f4f9; --card:#ffffff; --ink:#1a1a2e; --sub:#5b6270; --faint:#8585a3;
+  --line:rgba(12,16,24,.08); --fill:#eef0f6;
+  --accent:#6a5cf0; --accent-ink:#5b4fe8; --accent-soft:rgba(124,111,255,.14);
+  --good:#2dc88a; --good-ink:#13885b; --warn:#f5a623; --warn-ink:#8a5a00;
+  --bad:#e8365d; --bad-ink:#c01f44; --grid:rgba(12,16,24,.07);
+  --shadow:0 1px 0 rgba(12,16,24,.04), 0 12px 28px -20px rgba(12,16,24,.35);
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme:dark;
+    --bg:#0b0b12; --card:#16161f; --ink:#f3f3f8; --sub:#a1a8b3; --faint:#6b6b85;
+    --line:rgba(255,255,255,.09); --fill:#20202b;
+    --accent:#8c80ff; --accent-ink:#b3aaff; --accent-soft:rgba(140,128,255,.20);
+    --good-ink:#4fd7a0; --warn-ink:#f5b942; --bad-ink:#ff8aa5; --grid:rgba(255,255,255,.07);
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0b0b12; --card:#16161f; --ink:#f3f3f8; --sub:#a1a8b3; --faint:#6b6b85;
+  --line:rgba(255,255,255,.09); --fill:#20202b;
+  --accent:#8c80ff; --accent-ink:#b3aaff; --accent-soft:rgba(140,128,255,.20);
+  --good-ink:#4fd7a0; --warn-ink:#f5b942; --bad-ink:#ff8aa5; --grid:rgba(255,255,255,.07);
+  --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg); color:var(--ink);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased; letter-spacing:-.005em}
+button,input,select{font:inherit; color:inherit}
+a{color:var(--accent-ink)}
+.wrap{max-width:1400px; margin:0 auto; padding:18px 24px 72px}
+header{display:flex; align-items:center; gap:14px; margin-bottom:14px; flex-wrap:wrap}
+header h1{margin:0; font-size:20px; font-weight:800; letter-spacing:-.4px}
+header .sp{flex:1}
+.live{display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:650; color:var(--sub)}
+.dot{width:8px; height:8px; border-radius:50%; background:var(--good); display:inline-block; flex:none}
+.dot.off{background:var(--faint)} .dot.bad{background:var(--bad)} .dot.warn{background:var(--warn)}
+.live .dot{animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){ .live .dot{animation:none} }
+.btn{appearance:none; border:1px solid var(--line); background:var(--card); border-radius:10px;
+  padding:7px 12px; font-weight:650; font-size:13px; cursor:pointer}
+.btn:hover{background:var(--fill)}
+.btn.primary{background:var(--accent); color:#fff; border-color:transparent}
+.btn.primary:hover{background:var(--accent-ink)}
+.demo{font-size:12px; font-weight:700; color:var(--warn-ink);
+  background:color-mix(in srgb,var(--warn) 18%,transparent); padding:3px 9px; border-radius:999px}
+
+/* tabs */
+.ctabs{display:flex; gap:6px; flex-wrap:wrap; margin:0 0 16px}
+.ctabs button{appearance:none; border:1px solid transparent; background:transparent; color:var(--sub);
+  border-radius:999px; padding:7px 14px; font-weight:680; font-size:13.5px; cursor:pointer}
+.ctabs button:hover{background:var(--fill); color:var(--ink)}
+.ctabs button[aria-selected="true"]{background:var(--accent-soft); color:var(--accent-ink); border-color:transparent}
+.ctabs .n{font-size:11.5px; font-weight:800; margin-left:6px; opacity:.85}
+
+/* layout */
+.grid{display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:14px}
+.card{background:var(--card); border:1px solid var(--line); border-radius:16px;
+  box-shadow:var(--shadow); padding:16px 18px; min-width:0}
+.card h2{margin:0 0 3px; font-size:16px; font-weight:780; letter-spacing:-.2px}
+.card .cap{font-size:13px; line-height:1.45; color:var(--sub); margin-bottom:14px; max-width:100ch}
+.c12{grid-column:span 12} .c8{grid-column:span 8} .c6{grid-column:span 6}
+.c5{grid-column:span 5} .c4{grid-column:span 4} .c7{grid-column:span 7}
+@media (max-width:1040px){ .c8,.c6,.c5,.c4,.c7{grid-column:span 12} }
+
+/* numbers */
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:10px}
+.kpi{background:var(--fill); border-radius:12px; padding:11px 13px}
+.kpi .k{font-size:11.5px; font-weight:750; color:var(--sub); text-transform:uppercase; letter-spacing:.4px}
+.kpi .v{font-size:25px; font-weight:800; letter-spacing:-.8px; margin-top:2px; line-height:1.15}
+.kpi .s{font-size:12px; color:var(--faint); margin-top:1px}
+.kpi.warn .v{color:var(--warn-ink)} .kpi.bad .v{color:var(--bad-ink)} .kpi.good .v{color:var(--good-ink)}
+
+/* tables */
+table{width:100%; border-collapse:collapse; font-size:13.5px}
+th{text-align:left; font-weight:700; font-size:11.5px; text-transform:uppercase; letter-spacing:.4px;
+  color:var(--sub); padding:6px 10px 7px; border-bottom:1px solid var(--line); white-space:nowrap}
+th.s{cursor:pointer} th.s:hover{color:var(--ink)}
+td{padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--fill)}
+tbody tr.sel{background:var(--accent-soft)}
+td.num,th.num{text-align:right; font-variant-numeric:tabular-nums}
+.mono{font-variant-numeric:tabular-nums}
+.muted{color:var(--faint)}
+.scroll{overflow:auto; max-height:620px; margin:0 -6px}
+
+/* tags */
+.tag{display:inline-block; font-size:11px; font-weight:750; padding:2px 7px; border-radius:999px;
+  background:var(--fill); color:var(--sub); white-space:nowrap}
+.tag.new{background:var(--accent-soft); color:var(--accent-ink)}
+.tag.bad{background:color-mix(in srgb,var(--bad) 16%,transparent); color:var(--bad-ink)}
+.tag.warn{background:color-mix(in srgb,var(--warn) 20%,transparent); color:var(--warn-ink)}
+.tag.good{background:color-mix(in srgb,var(--good) 18%,transparent); color:var(--good-ink)}
+.tags{display:flex; gap:4px; flex-wrap:wrap}
+
+/* chart */
+.chart{width:100%; height:170px; display:block}
+.chart .bar{fill:var(--accent); opacity:.85}
+.chart .bar.b2{fill:var(--good)}
+.chart .gl{stroke:var(--grid); stroke-width:1}
+.chart text{fill:var(--faint); font-size:10px}
+.legend{display:flex; gap:14px; font-size:12px; color:var(--sub); margin-top:8px; flex-wrap:wrap}
+.legend i{width:10px; height:10px; border-radius:3px; display:inline-block; margin-right:5px; vertical-align:-1px}
+.spark{height:22px; width:120px; display:block}
+.spark rect{fill:var(--accent); opacity:.8}
+
+/* bars inside tables */
+.meter{height:6px; border-radius:3px; background:var(--fill); overflow:hidden; min-width:60px}
+.meter i{display:block; height:100%; background:var(--accent)}
+
+/* gate */
+.gate{max-width:380px; margin:12vh auto; }
+.gate label{display:block; font-size:12.5px; font-weight:700; color:var(--sub); margin:12px 0 4px}
+.gate input{width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:var(--fill)}
+.gate .err{color:var(--bad-ink); font-size:13px; margin-top:10px; min-height:18px}
+.gate .btn{width:100%; margin-top:14px; padding:11px}
+.empty{color:var(--faint); padding:26px 10px; text-align:center}
+.note{font-size:12.5px; color:var(--faint); margin-top:10px; line-height:1.5}
+.bad-banner{background:color-mix(in srgb,var(--bad) 12%,transparent); color:var(--bad-ink);
+  border:1px solid color-mix(in srgb,var(--bad) 30%,transparent); border-radius:12px;
+  padding:11px 14px; font-size:13.5px; margin-bottom:14px}
+.ctl{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px}
+.ctl input[type=search]{padding:7px 11px; border-radius:9px; border:1px solid var(--line);
+  background:var(--fill); min-width:200px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+/* ============================================================================
+   CONFIG — the same public project address and key as the app ships with. The
+   key is the public one; what protects the data is the server: every
+   admin_cr_* function checks is_admin() itself, and `admins` has row level
+   security on with no policies, so nobody reaches it except those functions.
+   ========================================================================= */
+const SB_URL="https://vtmmuksezzrsbnxteofw.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0bW11a3Nlenpyc2JueHRlb2Z3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMjk5MTgsImV4cCI6MjA5NzcwNTkxOH0.mcbD3ca9MNxHtWWF6gLhPbOkdpUq9XOZwzkq2QqqFLQ";
+const SESS_KEY="sscr_session";
+const DEMO = /(^|[#?&])demo\b/.test(location.hash+location.search);
+
+const DEFAULT_CATS=["Food & Drink","Transport","Shopping","Entertainment","Health","Travel","Other"];
+
+/* ---------- small helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const n0=v=>(v==null?"—":Number(v).toLocaleString());
+const dayms=864e5;
+function ago(t){
+  if(!t) return "never";
+  const d=Math.floor((Date.now()-new Date(t))/dayms);
+  if(d<=0){ const h=Math.floor((Date.now()-new Date(t))/36e5); return h<1?"just now":h+"h ago"; }
+  if(d===1) return "yesterday";
+  // Days all the way to 90, so this never says "2 months ago" beside a tag
+  // that says "quiet 45d". Past that, whole months, counted down not rounded.
+  if(d<90) return d+" days ago";
+  const m=Math.floor(d/30); if(m<12) return m+(m===1?" month":" months")+" ago";
+  const y=Math.floor(d/365); return y+(y===1?" year":" years")+" ago";
+}
+const dmy=t=>t?new Date(t).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):"—";
+const dshort=d=>new Date(d+"T00:00:00").toLocaleDateString(undefined,{day:"numeric",month:"short"});
+const hhmm=t=>new Date(t).toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
+const daysSince=t=>t?Math.floor((Date.now()-new Date(t))/dayms):Infinity;
+/* 1st, 2nd, 3rd, 4th… 11th/12th/13th are the exceptions that catch everyone out. */
+const ord=n=>{ if(n==null) return "—"; const a=n%100, b=n%10;
+  return n+((a>=11&&a<=13)?"th":b===1?"st":b===2?"nd":b===3?"rd":"th"); };
+
+/* ---------- the server ---------- */
+function sess(){ try{ return JSON.parse(localStorage.getItem(SESS_KEY)||"null"); }catch(e){ return null; } }
+function setSess(s){ try{ s?localStorage.setItem(SESS_KEY,JSON.stringify(s)):localStorage.removeItem(SESS_KEY); }catch(e){} }
+async function signIn(email,password){
+  const r=await fetch(SB_URL+"/auth/v1/token?grant_type=password",{method:"POST",
+    headers:{apikey:SB_KEY,"Content-Type":"application/json"},body:JSON.stringify({email,password})});
+  const b=await r.json().catch(()=>({}));
+  if(!r.ok||!b.access_token) throw new Error(b.error_description||b.msg||"Could not sign in.");
+  b.expires_at_ms=Date.now()+(+b.expires_in||3600)*1000; setSess(b); return b;
+}
+async function renew(){
+  const s=sess(); if(!s||!s.refresh_token) return null;
+  const r=await fetch(SB_URL+"/auth/v1/token?grant_type=refresh_token",{method:"POST",
+    headers:{apikey:SB_KEY,"Content-Type":"application/json"},body:JSON.stringify({refresh_token:s.refresh_token})});
+  if(!r.ok){ if(r.status>=400&&r.status<500) setSess(null); return null; }
+  const b=await r.json(); b.expires_at_ms=Date.now()+(+b.expires_in||3600)*1000; setSess(b); return b;
+}
+async function rpc(fn,args){
+  let s=sess(); if(!s) throw new Error("signed out");
+  if(Date.now()>(s.expires_at_ms||0)-60000) s=await renew()||s;
+  const call=()=>fetch(SB_URL+"/rest/v1/rpc/"+fn,{method:"POST",
+    headers:{apikey:SB_KEY,Authorization:"Bearer "+(sess()||{}).access_token,"Content-Type":"application/json"},
+    body:JSON.stringify(args||{})});
+  let r=await call();
+  if(r.status===401){ if(await renew()) r=await call(); else throw new Error("signed out"); }
+  if(!r.ok){ const b=await r.json().catch(()=>({})); const e=new Error(b.message||("HTTP "+r.status)); e.code=b.code; throw e; }
+  const t=await r.text(); return t?JSON.parse(t):null;
+}
+/* A function the server does not have yet is not an error on this page: it is
+   "run part 01". Being refused is not an error either: it is "add yourself". */
+async function tryRpc(fn,args,fallback){
+  try{ return await rpc(fn,args); }
+  catch(e){
+    const s=String(e.message)+e.code;
+    if(/does not exist|PGRST202|42883|Could not find/i.test(s)){ S.missing.add(fn); return fallback; }
+    if(/not allowed|42501/i.test(s)){ S.denied=true; return fallback; }
+    throw e;
+  }
+}
+
+/* ---------- state ---------- */
+const TABS=[["today","Today"],["people","People"],["activity","Activity"],["money","Money"],["trips","Trips"]];
+const S={
+  tab:(()=>{ try{ const t=localStorage.getItem("sscr_tab"); return TABS.some(x=>x[0]===t)?t:"today"; }catch(e){ return "today"; } })(),
+  sum:null, users:[], daily:[], currencies:[], categories:[], trips:[], retention:[],
+  pick:null, pickDays:[], q:"", sort:"created_at", dir:-1, chart:"entries", range:60,
+  missing:new Set(), denied:false, err:"", loadedAt:0, timer:null
+};
+
+async function load(){
+  if(DEMO){ demoData(); draw(); return; }
+  try{
+    S.missing=new Set(); S.denied=false;
+    const [sum,users,daily,cur,cat,trips,ret]=await Promise.all([
+      tryRpc("admin_cr_summary",{},[]),
+      tryRpc("admin_cr_users",{},[]),
+      tryRpc("admin_cr_daily",{p_days:S.range},[]),
+      tryRpc("admin_cr_currencies",{},[]),
+      tryRpc("admin_cr_categories",{},[]),
+      tryRpc("admin_cr_trips",{},[]),
+      tryRpc("admin_cr_retention",{},[])
+    ]);
+    Object.assign(S,{sum:(sum||[])[0]||null, users:users||[], daily:daily||[],
+      currencies:cur||[], categories:cat||[], trips:trips||[], retention:ret||[],
+      err:"", loadedAt:Date.now()});
+    if(S.pick) await loadPick(S.pick);
+  }catch(e){
+    if(/signed out/.test(e.message)){ setSess(null); draw(); return; }
+    S.err=e.message;
+  }
+  draw();
+}
+async function loadPick(id){
+  if(DEMO){ S.pickDays=demoDays(id); return; }
+  S.pickDays=await tryRpc("admin_cr_user_days",{p_user:id,p_days:90},[])||[];
+}
+function startLive(){ clearInterval(S.timer); S.timer=setInterval(()=>{
+  const a=document.activeElement, typing=a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
+  if(!document.hidden && !typing && (sess()||DEMO)) load();
+}, 60000); }
+
+/* ============================================================================
+   WHAT NEEDS LOOKING AT — the judgements, in one place so the page and the
+   People tags can never disagree about what "lapsed" means.
+   ========================================================================= */
+const LAPSED_DAYS=14;
+function flagsFor(u){
+  const f=[];
+  if(daysSince(u.created_at)<7) f.push(["new","new"]);
+  if(!u.confirmed) f.push(["warn","email not confirmed"]);
+  if(!u.entries) f.push(["bad","never logged anything"]);
+  else if(daysSince(u.last_entry)>LAPSED_DAYS) f.push(["warn","quiet "+daysSince(u.last_entry)+"d"]);
+  else f.push(["good","active"]);
+  if(u.offline_hint) f.push(["","logged offline"]);
+  if(u.trips) f.push(["","trip"]);
+  return f;
+}
+const isLapsed=u=>u.entries>0 && daysSince(u.last_entry)>LAPSED_DAYS;
+const isActive =u=>u.entries>0 && daysSince(u.last_entry)<=LAPSED_DAYS;
+
+/* ============================================================================
+   DRAW
+   ========================================================================= */
+function draw(){
+  const root=$("#root");
+  if(!DEMO && !sess()){ root.innerHTML=gateHtml(); wireGate(); return; }
+  if(!S.loadedAt && !S.err && !DEMO){ root.innerHTML=`<div class="wrap"><div class="empty">Loading…</div></div>`; return; }
+
+  const keep=[...document.querySelectorAll(".scroll")].map(x=>x.scrollTop);
+  root.innerHTML=`<div class="wrap">${headerHtml()}${noticeHtml()}${tabsHtml()}${bodyHtml()}</div>`;
+  [...document.querySelectorAll(".scroll")].forEach((x,i)=>{ if(keep[i]!=null) x.scrollTop=keep[i]; });
+}
+function headerHtml(){
+  return `<header>
+    <h1>SpendSeer Control Room</h1>
+    ${DEMO?`<span class="demo">Demo — made-up data</span>`
+          :`<span class="live"><span class="dot${S.err?" bad":""}"></span>${S.loadedAt?"Updated "+hhmm(S.loadedAt):"…"}</span>`}
+    <span class="sp"></span>
+    <button class="btn" onclick="load()">Refresh</button>
+    ${DEMO?"":`<button class="btn" onclick="setSess(null);location.reload()">Sign out</button>`}
+  </header>`;
+}
+function noticeHtml(){
+  let h="";
+  if(S.err) h+=`<div class="bad-banner"><b>Something went wrong:</b> ${esc(S.err)}</div>`;
+  if(S.denied) h+=`<div class="bad-banner">You are signed in, but this account is not in <b>admins</b>.
+    Run the last block of <b>SQL part 01</b> to add yourself, then refresh.</div>`;
+  if(S.missing.size) h+=`<div class="bad-banner">The server does not have
+    ${[...S.missing].map(x=>"<b>"+esc(x)+"</b>").join(", ")} yet — run <b>SQL part 01</b>.</div>`;
+  return h;
+}
+function tabCount(k){
+  if(k==="people") return S.users.length;
+  if(k==="trips")  return S.trips.length;
+  if(k==="today")  return todoList().length||"";
+  return "";
+}
+function tabsHtml(){
+  return `<nav class="ctabs" role="tablist">${TABS.map(([k,l])=>{
+    const n=tabCount(k);
+    return `<button role="tab" aria-selected="${S.tab===k}" onclick="go('${k}')">${l}${n!==""&&n!=null?`<span class="n">${n}</span>`:""}</button>`;
+  }).join("")}</nav>`;
+}
+function go(t){ S.tab=t; try{ localStorage.setItem("sscr_tab",t); }catch(e){} draw(); }
+function bodyHtml(){
+  if(S.tab==="today")    return todayHtml();
+  if(S.tab==="people")   return peopleHtml();
+  if(S.tab==="activity") return activityHtml();
+  if(S.tab==="money")    return moneyHtml();
+  if(S.tab==="trips")    return tripsHtml();
+  return "";
+}
+
+/* ---------- Today ---------- */
+function kpi(k,v,s,cls){ return `<div class="kpi ${cls||""}"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s||""}</div></div>`; }
+function todayHtml(){
+  const s=S.sum||{};
+  const lapsed=S.users.filter(isLapsed).length;
+  return `<div class="grid">
+    <section class="card c12">
+      <h2>Where SpendSeer stands</h2>
+      <div class="cap">Everyone with an account, and what they have done with it. “Active” means
+        they logged an expense — the app does not report when it is merely opened.</div>
+      <div class="kpis">
+        ${kpi("People", n0(s.users_total), (s.users_new_7d||0)+" joined this week")}
+        ${kpi("Active, 7 days", n0(s.users_active_7d), "logged something")}
+        ${kpi("Active, 30 days", n0(s.users_active_30d), "")}
+        ${kpi("Never logged", n0(s.users_never_logged), "signed up, then nothing", s.users_never_logged?"bad":"")}
+        ${kpi("Gone quiet", n0(lapsed), "were using it, stopped", lapsed?"warn":"")}
+        ${kpi("Expenses", n0(s.entries_total), n0(s.entries_7d)+" this week")}
+        ${kpi("Today", n0(s.entries_today), "expenses logged")}
+        ${kpi("Last expense", s.last_entry_at?ago(s.last_entry_at):"never", s.last_entry_at?dmy(s.last_entry_at):"")}
+      </div>
+    </section>
+
+    <section class="card c7">
+      <h2>The last ${S.range} days</h2>
+      <div class="cap">Expenses logged per day, and how many different people logged them.</div>
+      ${chartHtml()}
+      <div class="legend">
+        <span><i style="background:var(--accent)"></i>Expenses</span>
+        <span><i style="background:var(--good)"></i>People who logged one</span>
+        <span class="sp"></span>
+      </div>
+      <div class="ctl" style="margin-top:12px; margin-bottom:0">
+        ${[30,60,90].map(d=>`<button class="btn${S.range===d?" primary":""}" onclick="setRange(${d})">${d} days</button>`).join("")}
+      </div>
+    </section>
+
+    <section class="card c5">
+      <h2>Worth looking at</h2>
+      <div class="cap">Ordered by how much it matters. Click anyone to open them.</div>
+      ${todoHtml()}
+    </section>
+  </div>`;
+}
+function todoList(){
+  const out=[];
+  for(const u of S.users){
+    if(!u.entries && daysSince(u.created_at)>2)
+      out.push({u, w:3, why:"signed up "+ago(u.created_at)+" and has never logged an expense"});
+    else if(isLapsed(u))
+      out.push({u, w:2, why:"logged "+u.entries+" expenses, nothing for "+daysSince(u.last_entry)+" days"});
+    else if(!u.confirmed)
+      out.push({u, w:1, why:"email was never confirmed"});
+  }
+  return out.sort((a,b)=>b.w-a.w || (b.u.entries-a.u.entries));
+}
+function todoHtml(){
+  const l=todoList();
+  if(!l.length) return `<div class="empty">Nothing needs attention. Everyone with an account is using it.</div>`;
+  return `<div class="scroll" style="max-height:430px"><table><tbody>${l.map(({u,why})=>`
+    <tr onclick="pick('${u.user_id}')" style="cursor:pointer">
+      <td><div style="font-weight:650">${esc(u.email||"(no email)")}</div>
+          <div class="muted" style="font-size:12.5px">${esc(why)}</div></td>
+    </tr>`).join("")}</tbody></table></div>`;
+}
+function setRange(d){ S.range=d; load(); }
+
+/* ---------- the chart ---------- */
+function chartHtml(){
+  const d=S.daily; if(!d.length) return `<div class="empty">No days yet.</div>`;
+  const W=760,H=170,PL=34,PB=20,PT=8;
+  const max=Math.max(1,...d.map(x=>Math.max(x.entries,x.active_users)));
+  const bw=(W-PL-6)/d.length;
+  const y=v=>PT+(H-PT-PB)*(1-v/max);
+  const ticks=[0,Math.round(max/2),max].filter((v,i,a)=>a.indexOf(v)===i);
+  const labelEvery=Math.ceil(d.length/8);
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img"
+      aria-label="Expenses per day for the last ${d.length} days">
+    ${ticks.map(v=>`<line class="gl" x1="${PL}" x2="${W}" y1="${y(v)}" y2="${y(v)}"/>
+        <text x="${PL-6}" y="${y(v)+3}" text-anchor="end">${v}</text>`).join("")}
+    ${d.map((x,i)=>{
+      const bx=PL+i*bw, h1=Math.max(0,(H-PT-PB)*x.entries/max), h2=Math.max(0,(H-PT-PB)*x.active_users/max);
+      return `<rect class="bar" x="${bx+bw*.10}" y="${y(x.entries)}" width="${bw*.44}" height="${h1}" rx="1"><title>${dshort(x.day)}: ${x.entries} expenses</title></rect>
+              <rect class="bar b2" x="${bx+bw*.54}" y="${y(x.active_users)}" width="${bw*.36}" height="${h2}" rx="1"><title>${dshort(x.day)}: ${x.active_users} people</title></rect>`;
+    }).join("")}
+    ${d.map((x,i)=>i%labelEvery===0?`<text x="${PL+i*bw+bw/2}" y="${H-6}" text-anchor="middle">${dshort(x.day)}</text>`:"").join("")}
+  </svg>`;
+}
+
+/* ---------- People ---------- */
+const COLS=[
+  ["email","Person",      u=>`<div style="font-weight:650">${esc(u.email||"(no email)")}</div><div class="tags" style="margin-top:3px">${flagsFor(u).map(([c,t])=>`<span class="tag ${c}">${esc(t)}</span>`).join("")}</div>`],
+  ["created_at","Joined", u=>`<div>${dmy(u.created_at)}</div><div class="muted" style="font-size:12px">${ago(u.created_at)}</div>`],
+  ["last_entry","Last expense", u=>u.last_entry?`<div>${ago(u.last_entry)}</div><div class="muted" style="font-size:12px">${dmy(u.last_entry)}</div>`:`<span class="muted">never</span>`],
+  ["entries","Expenses",  u=>n0(u.entries), 1],
+  ["active_days","Days used", u=>n0(u.active_days), 1],
+  ["home_currency","Home", u=>esc(u.home_currency||"—")],
+  ["period_day","Period starts", u=>u.period_day?("the "+ord(u.period_day)):"—"],
+  ["currencies","Currencies", u=>(u.currencies||[]).length?(u.currencies||[]).map(c=>`<span class="tag">${esc(c)}</span>`).join(" "):`<span class="muted">—</span>`],
+  ["categories_custom","Own categories", u=>n0(u.categories_custom), 1],
+];
+function peopleHtml(){
+  const q=S.q.trim().toLowerCase();
+  let rows=S.users.filter(u=>!q||String(u.email||"").toLowerCase().includes(q)||(u.currencies||[]).join(",").toLowerCase().includes(q));
+  const k=S.sort;
+  rows=rows.slice().sort((a,b)=>{
+    let x=a[k], y=b[k];
+    if(k==="created_at"||k==="last_entry"){ x=x?new Date(x):0; y=y?new Date(y):0; }
+    if(typeof x==="string"||typeof y==="string"){ x=String(x||""); y=String(y||""); return S.dir*x.localeCompare(y); }
+    return S.dir*((x||0)-(y||0));
+  });
+  return `<div class="grid">
+    <section class="card c12">
+      <h2>Everyone with an account</h2>
+      <div class="cap">${S.users.length} ${S.users.length===1?"person":"people"}. No expense amounts and no notes are shown here —
+        running the app needs to know whether somebody uses it, not what they spend.</div>
+      <div class="ctl">
+        <input type="search" placeholder="Search email or currency…" value="${esc(S.q)}"
+          oninput="S.q=this.value; draw(); const i=document.querySelector('input[type=search]'); i.focus(); i.setSelectionRange(i.value.length,i.value.length)">
+        <span class="muted">${rows.length} shown</span>
+      </div>
+      <div class="scroll">
+        <table><thead><tr>${COLS.map(c=>`<th class="s${c[3]?" num":""}" onclick="sortBy('${c[0]}')">${c[1]}${S.sort===c[0]?(S.dir>0?" ↑":" ↓"):""}</th>`).join("")}</tr></thead>
+        <tbody>${rows.length?rows.map(u=>`<tr class="${S.pick===u.user_id?"sel":""}" style="cursor:pointer" onclick="pick('${u.user_id}')">
+          ${COLS.map(c=>`<td class="${c[3]?"num":""}">${c[2](u)}</td>`).join("")}</tr>`).join("")
+          :`<tr><td colspan="${COLS.length}"><div class="empty">Nobody matches that.</div></td></tr>`}</tbody></table>
+      </div>
+    </section>
+    ${S.pick?personHtml():""}
+  </div>`;
+}
+function sortBy(k){ if(S.sort===k) S.dir=-S.dir; else { S.sort=k; S.dir=-1; } draw(); }
+async function pick(id){ S.pick=S.pick===id?null:id; S.tab="people"; try{localStorage.setItem("sscr_tab","people");}catch(e){} if(S.pick) await loadPick(S.pick); draw(); }
+function personHtml(){
+  const u=S.users.find(x=>x.user_id===S.pick); if(!u) return "";
+  const d=S.pickDays||[];
+  const max=Math.max(1,...d.map(x=>x.entries));
+  const byDay=Object.fromEntries(d.map(x=>[x.day,x.entries]));
+  const cells=[];
+  for(let i=89;i>=0;i--){
+    const dt=new Date(Date.now()-i*dayms).toISOString().slice(0,10);
+    cells.push({dt, n:byDay[dt]||0});
+  }
+  return `<section class="card c12">
+    <h2>${esc(u.email||"(no email)")}</h2>
+    <div class="cap">Joined ${dmy(u.created_at)} · last signed in ${ago(u.last_sign_in)} ·
+      ${n0(u.entries)} expenses on ${n0(u.active_days)} different days${u.deleted_entries?` · ${n0(u.deleted_entries)} deleted`:""}.
+      ${u.offline_hint?"Has logged at least one expense well after it was spent — offline, or back-dated.":""}</div>
+    <div class="kpis" style="margin-bottom:14px">
+      ${kpi("Expenses", n0(u.entries), "")}
+      ${kpi("Days used", n0(u.active_days), "of "+Math.max(1,daysSince(u.created_at))+" since joining")}
+      ${kpi("Home currency", esc(u.home_currency||"—"), "period starts on the "+ord(u.period_day))}
+      ${kpi("Currencies", (u.currencies||[]).length||0, (u.currencies||[]).join(" ")||"none yet")}
+      ${kpi("Own categories", n0(u.categories_custom), "beyond the seven")}
+      ${kpi("Trips", n0(u.trips), "split with friends")}
+    </div>
+    <div class="cap" style="margin-bottom:6px">The last 90 days — one mark per day they logged something.</div>
+    <svg class="chart" style="height:76px" viewBox="0 0 760 76" preserveAspectRatio="none">
+      ${cells.map((c,i)=>{ const h=c.n?Math.max(4,60*c.n/max):1.5;
+        return `<rect x="${i*8.4+2}" y="${68-h}" width="6" height="${h}" rx="1.5"
+          fill="${c.n?"var(--accent)":"var(--grid)"}"><title>${dshort(c.dt)}: ${c.n} expenses</title></rect>`;}).join("")}
+    </svg>
+    <div class="note">User id <span class="mono">${esc(u.user_id)}</span></div>
+    <div style="margin-top:12px"><button class="btn" onclick="S.pick=null;draw()">Close</button></div>
+  </section>`;
+}
+
+/* ---------- Activity ---------- */
+function activityHtml(){
+  const r=S.retention;
+  return `<div class="grid">
+    <section class="card c12">
+      <h2>Day by day</h2>
+      <div class="cap">The same chart as Today, with the numbers underneath.</div>
+      ${chartHtml()}
+      <div class="ctl" style="margin:12px 0 0">
+        ${[30,60,90].map(d=>`<button class="btn${S.range===d?" primary":""}" onclick="setRange(${d})">${d} days</button>`).join("")}
+      </div>
+    </section>
+    <section class="card c12">
+      <h2>Does anyone stay?</h2>
+      <div class="cap">One row per week people joined. “Still logging” means they logged something in the last
+        ${LAPSED_DAYS} days — the honest test of whether the app stuck.</div>
+      ${r.length?`<div class="scroll"><table>
+        <thead><tr><th>Joined the week of</th><th class="num">People</th><th class="num">Ever logged</th>
+          <th class="num">Still there after a week</th><th class="num">Still logging</th><th>Stuck</th></tr></thead>
+        <tbody>${r.map(c=>{
+          const pct=c.joined?Math.round(100*c.active_now/c.joined):0;
+          return `<tr><td>${dmy(c.cohort)}</td><td class="num">${n0(c.joined)}</td>
+            <td class="num">${n0(c.ever_logged)}</td><td class="num">${n0(c.logged_week_2)}</td>
+            <td class="num">${n0(c.active_now)}</td>
+            <td><div class="meter" title="${pct}%"><i style="width:${pct}%"></i></div></td></tr>`;
+        }).join("")}</tbody></table></div>`:`<div class="empty">Nobody has signed up yet.</div>`}
+    </section>
+  </div>`;
+}
+
+/* ---------- Money ---------- */
+function moneyHtml(){
+  const cur=S.currencies, cat=S.categories;
+  const cmax=Math.max(1,...cur.map(c=>c.entries));
+  const tmax=Math.max(1,...cat.map(c=>c.entries));
+  return `<div class="grid">
+    <section class="card c6">
+      <h2>Currencies</h2>
+      <div class="cap">What people actually type in, and what they have chosen as their home currency.
+        This is the clearest signal of where SpendSeer is being used.</div>
+      ${cur.length?`<div class="scroll"><table>
+        <thead><tr><th>Currency</th><th class="num">Expenses</th><th class="num">People</th><th class="num">Home for</th><th></th></tr></thead>
+        <tbody>${cur.map(c=>`<tr><td><b>${esc(c.currency)}</b></td><td class="num">${n0(c.entries)}</td>
+          <td class="num">${n0(c.users)}</td><td class="num">${n0(c.is_home_for)}</td>
+          <td style="width:140px"><div class="meter"><i style="width:${Math.round(100*c.entries/cmax)}%"></i></div></td></tr>`).join("")}
+        </tbody></table></div>`:`<div class="empty">No expenses yet.</div>`}
+    </section>
+    <section class="card c6">
+      <h2>Categories</h2>
+      <div class="cap">The seven every account starts with, plus any somebody made themselves.
+        A default nobody uses is a default worth reconsidering.</div>
+      ${cat.length?`<div class="scroll"><table>
+        <thead><tr><th>Category</th><th class="num">People</th><th class="num">Expenses</th><th></th></tr></thead>
+        <tbody>${cat.map(c=>`<tr><td>${esc(c.name)} ${c.is_default?"":`<span class="tag new">their own</span>`}</td>
+          <td class="num">${n0(c.users)}</td><td class="num">${n0(c.entries)}</td>
+          <td style="width:140px"><div class="meter"><i style="width:${Math.round(100*c.entries/tmax)}%"></i></div></td></tr>`).join("")}
+        </tbody></table></div>`:`<div class="empty">No categories yet.</div>`}
+    </section>
+  </div>`;
+}
+
+/* ---------- Trips ---------- */
+function tripsHtml(){
+  const t=S.trips;
+  const emailOf=id=>{ const u=S.users.find(x=>x.user_id===id); return u?u.email:id; };
+  return `<div class="grid"><section class="card c12">
+    <h2>Trips</h2>
+    <div class="cap">Split-with-friends. The tables exist on the server and the app can already write to them;
+      the screens are not shipped yet, so anything here is early use or testing.</div>
+    ${t.length?`<div class="scroll"><table>
+      <thead><tr><th>Trip</th><th>Base</th><th>Started by</th><th class="num">Members</th>
+        <th class="num">Invited, not joined</th><th class="num">Expenses</th><th>Created</th><th></th></tr></thead>
+      <tbody>${t.map(x=>`<tr><td><b>${esc(x.name)}</b></td><td>${esc(x.base_currency)}</td>
+        <td>${esc(emailOf(x.created_by))}</td><td class="num">${n0(x.members)}</td>
+        <td class="num">${n0(x.pending_invites)}</td><td class="num">${n0(x.expenses)}</td>
+        <td>${dmy(x.created_at)}</td><td>${x.archived?`<span class="tag">archived</span>`:""}</td></tr>`).join("")}
+      </tbody></table></div>`:`<div class="empty">No trips yet.</div>`}
+  </section></div>`;
+}
+
+/* ---------- the gate ---------- */
+function gateHtml(){
+  return `<div class="wrap"><div class="gate card">
+    <h2 style="margin-bottom:4px">SpendSeer Control Room</h2>
+    <div class="cap">Sign in with your own SpendSeer account. Only accounts in <b>admins</b> see anything.</div>
+    <label for="e">Email</label><input id="e" type="email" autocomplete="username">
+    <label for="p">Password</label><input id="p" type="password" autocomplete="current-password">
+    <div class="err" id="ge"></div>
+    <button class="btn primary" id="gb">Sign in</button>
+    <div class="note">Nothing is stored on this page beyond your own session.
+      Add <a href="#demo">#demo</a> to look around with made-up data.</div>
+  </div></div>`;
+}
+function wireGate(){
+  const go=async()=>{
+    const b=$("#gb"), err=$("#ge");
+    b.disabled=true; err.textContent="";
+    try{ await signIn($("#e").value.trim(), $("#p").value); await load(); startLive(); }
+    catch(e){ err.textContent=e.message; b.disabled=false; }
+  };
+  $("#gb").onclick=go;
+  $("#p").onkeydown=e=>{ if(e.key==="Enter") go(); };
+  $("#e").onkeydown=e=>{ if(e.key==="Enter") $("#p").focus(); };
+  $("#e").focus();
+}
+
+/* ============================================================================
+   DEMO — made-up data, so the page can be looked at without signing in and
+   without a single real person's row leaving the server.
+   ========================================================================= */
+function demoData(){
+  const names=["mara","jonas","amal","kenji","lea","tariq","ivy","noor","sam","ben","rosa","dev","yuki","omar","pia"];
+  const curs=["AED","USD","JPY","EUR","THB","GBP"];
+  const rnd=(s=>()=>((s=s*16807%2147483647)/2147483647))(7);
+  S.users=names.map((n,i)=>{
+    const joined=Date.now()-Math.round(rnd()*120+i*3)*dayms;
+    const dead=i%7===0, quiet=i%5===2;
+    const entries=dead?0:Math.round(rnd()*70)+3;
+    const last=dead?null:Date.now()-(quiet?Math.round(rnd()*40)+15:Math.round(rnd()*6))*dayms;
+    return {user_id:"demo-"+i, email:n+"@example.com", created_at:new Date(joined).toISOString(),
+      confirmed:i!==4, last_sign_in:new Date(Date.now()-Math.round(rnd()*20)*dayms).toISOString(),
+      entries, first_entry:dead?null:new Date(joined+2*dayms).toISOString(),
+      last_entry:last?new Date(last).toISOString():null,
+      active_days:Math.min(entries,Math.round(entries*0.7)), deleted_entries:i%6===0?1:0,
+      categories_custom:i%4===0?2:0, home_currency:curs[i%curs.length], period_day:[1,1,1,25,26,15][i%6],
+      currencies:dead?[]:curs.slice(0,1+(i%4)),
+      trips:(!dead&&i%9===0)?1:0, offline_hint:!dead&&i%5===0};
+  });
+  const days=[];
+  for(let i=S.range-1;i>=0;i--){
+    const d=new Date(Date.now()-i*dayms).toISOString().slice(0,10);
+    const wk=new Date(d).getDay(), base=wk===0||wk===6?4:9;
+    days.push({day:d, signups:rnd()<.12?1:0, active_users:Math.max(0,Math.round(base*0.6+rnd()*4)), entries:Math.max(0,Math.round(base+rnd()*8))});
+  }
+  S.daily=days;
+  S.sum={users_total:S.users.length, users_new_7d:2, users_new_30d:5,
+    users_active_7d:S.users.filter(isActive).length, users_active_30d:11,
+    users_never_logged:S.users.filter(u=>!u.entries).length, users_unconfirmed:1,
+    entries_total:S.users.reduce((a,u)=>a+u.entries,0), entries_today:6, entries_7d:48, entries_30d:214,
+    entries_deleted:3, categories_custom:8, currencies_distinct:6, trips_total:2, trip_users:3,
+    last_entry_at:new Date(Date.now()-2*36e5).toISOString()};
+  S.currencies=curs.map((c,i)=>({currency:c, entries:Math.round(180/(i+1)), users:Math.max(1,10-i*2), is_home_for:[6,4,2,2,1,0][i]}));
+  S.categories=DEFAULT_CATS.map((n,i)=>({name:n, is_default:true, users:S.users.length, entries:Math.round(160/(i+1))}))
+    .concat([{name:"Coffee", is_default:false, users:3, entries:22},{name:"Rent", is_default:false, users:2, entries:5}]);
+  S.trips=[{id:"t1", name:"Tokyo, March", base_currency:"JPY", created_at:new Date(Date.now()-20*dayms).toISOString(),
+            created_by:"demo-0", members:3, pending_invites:1, expenses:14, archived:false},
+           {id:"t2", name:"Lisbon", base_currency:"EUR", created_at:new Date(Date.now()-90*dayms).toISOString(),
+            created_by:"demo-2", members:2, pending_invites:0, expenses:31, archived:true}];
+  const weeks=[];
+  for(let i=0;i<8;i++){
+    const joined=Math.round(rnd()*4)+1;
+    weeks.push({cohort:new Date(Date.now()-(i*7+3)*dayms).toISOString().slice(0,10),
+      joined, ever_logged:Math.max(0,joined-(i%3===0?1:0)),
+      logged_week_2:Math.max(0,joined-(i%2)-1), active_now:Math.max(0,joined-i%3-1)});
+  }
+  S.retention=weeks;
+  S.loadedAt=Date.now(); S.err=""; S.missing=new Set(); S.denied=false;
+}
+function demoDays(id){
+  const rnd=(s=>()=>((s=s*16807%2147483647)/2147483647))(id.length*13+7);
+  const out=[];
+  for(let i=89;i>=0;i--){ if(rnd()<.45) continue;
+    out.push({day:new Date(Date.now()-i*dayms).toISOString().slice(0,10), entries:1+Math.round(rnd()*4)}); }
+  return out;
+}
+
+/* ---------- go ---------- */
+window.addEventListener("hashchange",()=>location.reload());
+if(DEMO || sess()){ load(); startLive(); } else draw();
+</script>
+</body>
+</html>
